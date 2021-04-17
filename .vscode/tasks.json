@@ -8,23 +8,25 @@
 			"args": [
 				"-g",
 				"-o",
-				"${workspaceFolder}/bin/gui.exe",
-				"${workspaceFolder}/src/*.cpp",
+				"${workspaceFolder}\\bin\\gui.exe",
+				"${workspaceFolder}\\src\\*.cpp",
 				"-I",
-				"${workspaceFolder}/include",
+				"${workspaceFolder}\\include",
 				"-L",
-				"${workspaceFolder}/lib/*",
-				"-lmingw32",
-				"-lglfw3",
-				"-lgdi32",
+				"${workspaceFolder}\\lib\\*",
+				"-lglew32",
+				"-lglfw3dll",
 				"-lopengl32"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": ["$gcc"],
-			"group": "build",
-			"detail": "compiler: C:\\MinGW\\bin\\g++.exe"
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "MinGW g++"
 		},
 		{
 			"type": "cppbuild",
@@ -45,10 +47,7 @@
 				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": ["$gcc"],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"group": "build",
 			"detail": "compiler: /bin/g++"
 		}
 	]
