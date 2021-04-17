@@ -1,2 +1,2 @@
-# OpenGl-GUI
+# OpenGL-GUI
 OpenGL Gui Template
