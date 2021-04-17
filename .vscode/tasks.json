@@ -8,16 +8,15 @@
 			"args": [
 				"-g",
 				"-o",
-				"${workspaceFolder}/bin/gui.exe",
-				"${workspaceFolder}/src/*.cpp",
+				"${workspaceFolder}\\bin\\gui.exe",
+				"${workspaceFolder}\\src\\*.cpp",
 				"-I",
-				"${workspaceFolder}/include",
+				"${workspaceFolder}\\include",
 				"-L",
-				"${workspaceFolder}/lib/*",
-				"-lmingw32",
-				"-lglfw3",
-				"-lgdi32",
-				"-lopengl32"
+				"${workspaceFolder}\\lib\\*",
+				"-lglew32",
+				"-lglfw3dll",
+				"-lopengl32",
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -29,11 +28,11 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"detail": "compiler: C:\\MinGW\\bin\\g++.exe"
+			"detail": "MinGW g++"
 		},
 		{
 			"type": "cppbuild",
-			"label": "linux",
+			"label": "Linux",
 			"command": "C:/MinGW/bin/g++.exe",
 			"args": [
 				"-g",
