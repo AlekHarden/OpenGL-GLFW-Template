@@ -14,8 +14,10 @@ int main(void){
 
     if (!glfwInit()) throw "Error: GLFW could not initialize.";
 
+    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode *vidMode = glfwGetVideoMode(primaryMonitor);
 
-    GLFWwindow* window = glfwCreateWindow(640,480, "Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(vidMode->width, vidMode->height, "Window", primaryMonitor, NULL);
 
 
     
