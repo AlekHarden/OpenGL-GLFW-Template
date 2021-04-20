@@ -4,16 +4,19 @@
 
 #include <Display.hpp>
 
+int main(){
 
+    if (!glfwInit()) throw "Error: GLFW could not initialize.";
 
+    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode *vidMode = glfwGetVideoMode(primaryMonitor);
+    GLFWwindow* window = glfwCreateWindow(vidMode->width, vidMode->height, "Window", primaryMonitor, NULL);
 
-
-int main(void){
-
-
-    Display display("OpenGL");
-    GLFWwindow* window = display.getWindow();
-
+    
+    if (!window){
+        glfwTerminate();
+        return -1;
+    }
 
      
     /* Loop until the user closes the window */
