@@ -19,7 +19,8 @@
 
 
 
-void readSettings(std::map<std::string,struct setting>,std::string fileName);
+void readSettings(std::map<std::string,struct setting> &settings,std::string fileName);
+void writeSettings(std::map<std::string,struct setting> settings,std::string fileName);
 std::string getexepath();
 
 
@@ -36,9 +37,8 @@ int main(){
     settings.insert( std::pair<std::string,struct setting>("width",{"854","854"}));
     settings.insert( std::pair<std::string,struct setting>("height",{"480","480"}));
 
-
-    std::cout << "----" << std::endl;
     readSettings(settings,"settings.txt");
+    writeSettings(settings,"settings.txt");
 
 
 
@@ -46,9 +46,19 @@ int main(){
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
+    GLFWwindow* window;
+    std::string title = "Window";
 
-    GLFWwindow* window = glfwCreateWindow(300,300,"Window",NULL, NULL);
-
+    if(settings["fullscreen"].current == "true"){
+        glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
+        window = glfwCreateWindow(vidMode->width,vidMode->height,title.c_str(),primaryMonitor, NULL);
+    }
+    else{
+        window = glfwCreateWindow(std::atoi(settings["width"].current.c_str()),std::atoi(settings["height"].current.c_str()),title.c_str(),NULL, NULL);
+    }
 
     
     if (!window){
@@ -79,20 +89,46 @@ int main(){
     return 0;
 }
 
-void readSettings(std::map<std::string,struct setting>,std::string fileName){
+void readSettings(std::map<std::string,struct setting> &settings,std::string fileName){
 
     std::fstream file;
-
     std::string dir = getexepath().substr(0,getexepath().find_last_of("/\\")) + "/";
     std::string path = dir + fileName;
 
+    file.open(path,std::fstream::in);
+
+    std::string line;
+
+    std::string key;
+    std::string value;
+
+    int index;
+
+    while(std::getline(file,line)){
+        index = line.find('=',0);
+        key = line.substr(0,index);
+        value = line.substr(index + 1 ,line.length()-(index+1));
+        std::cout << key << " : " << value << std::endl;
+        settings[key].current = value;
+    }
+    file.close();
+}
 
 
+
+void writeSettings(std::map<std::string,struct setting> settings,std::string fileName){
+
+    std::fstream file;
+    std::string dir = getexepath().substr(0,getexepath().find_last_of("/\\")) + "/";
+    std::string path = dir + fileName;
 
     file.open(path,std::fstream::out);
 
-    file << "fuckmeeeeeee";
-
+    for(const auto& pair : settings ){
+        std::string line = pair.first + "=" + pair.second.current;
+        file << line;
+        file << std::endl;
+    }
     file.close();
 }
 
