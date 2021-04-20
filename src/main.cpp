@@ -14,14 +14,12 @@
 #endif
 
 
-
-
-
-
-
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName);
 void writeSettings(std::map<std::string,struct setting> settings,std::string fileName);
 std::string getexepath();
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 
 
 struct setting{
@@ -30,9 +28,18 @@ struct setting{
 };
 
 
+//Global Variables
+bool fullscreen;
+GLFWwindow* window;
+std::map<std::string,struct setting> settings;
+
+
+
+
+
+
 int main(){
 
-    std::map<std::string,struct setting> settings;
     settings.insert( std::pair<std::string,struct setting>("fullscreen",{"false","false"}));
     settings.insert( std::pair<std::string,struct setting>("width",{"854","854"}));
     settings.insert( std::pair<std::string,struct setting>("height",{"480","480"}));
@@ -40,16 +47,14 @@ int main(){
     readSettings(settings,"settings.txt");
     writeSettings(settings,"settings.txt");
 
-
-
     if (!glfwInit()) throw "Error: GLFW could not initialize.";
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
-    GLFWwindow* window;
     std::string title = "Window";
 
     if(settings["fullscreen"].current == "true"){
+        fullscreen = true;
         glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
         glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
@@ -57,29 +62,26 @@ int main(){
         window = glfwCreateWindow(vidMode->width,vidMode->height,title.c_str(),primaryMonitor, NULL);
     }
     else{
+        fullscreen = false;
         window = glfwCreateWindow(std::atoi(settings["width"].current.c_str()),std::atoi(settings["height"].current.c_str()),title.c_str(),NULL, NULL);
     }
 
-    
     if (!window){
         glfwTerminate();
     }
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
 
+    glfwSetKeyCallback(window, keyCallback);
+
+    glfwMakeContextCurrent(window);
     if (glewInit() != GLEW_OK) throw "Error: GLEW could not Initialize";
      
-    /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
         glfwPollEvents();
     }
 
@@ -108,8 +110,12 @@ void readSettings(std::map<std::string,struct setting> &settings,std::string fil
         index = line.find('=',0);
         key = line.substr(0,index);
         value = line.substr(index + 1 ,line.length()-(index+1));
+
         std::cout << key << " : " << value << std::endl;
-        settings[key].current = value;
+
+        if(settings.find(key) != settings.end()){
+            settings[key].current = value;
+        }
     }
     file.close();
 }
@@ -131,6 +137,25 @@ void writeSettings(std::map<std::string,struct setting> settings,std::string fil
     }
     file.close();
 }
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    if (key == GLFW_KEY_F11 && action == GLFW_PRESS){
+        //Fullscreen Toggle
+        GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
+        if(fullscreen){
+            int w = std::atoi(settings["width"].current.c_str());
+            int h = std::atoi(settings["height"].current.c_str());
+            glfwSetWindowMonitor(window, NULL, (vidMode->width/2)-(w/2), (vidMode->height/2)-(h/2),w,h,GLFW_DONT_CARE);
+        }
+        else{
+            glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidMode->width,vidMode->height,vidMode->refreshRate);
+        }
+        fullscreen = !fullscreen;
+    }
+        
+}
+
 
 
 
