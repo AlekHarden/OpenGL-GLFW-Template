@@ -4,12 +4,24 @@
 #include <fstream>
 #include <map>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#ifdef linux
+#include <limits.h>
+#include <unistd.h>
+#endif
+
+
 
 
 
 
 
 void readSettings(std::map<std::string,struct setting>,std::string fileName);
+std::string getexepath();
+
 
 struct setting{
     std::string preset;
@@ -72,17 +84,28 @@ void readSettings(std::map<std::string,struct setting>,std::string fileName){
     std::fstream file;
     file.open(fileName,std::fstream::out);
 
-    #ifdef _WIN32
-    std::cout << "windows" << std::endl;
-    #endif
-
-    #ifdef linux
-    std::cout << "linux" << std::endl;
-    #endif
-
-
+    std::cout << getexepath() << std::endl;
 
     file << "fuckmeeeeeee";
 
     file.close();
 }
+
+
+
+#ifdef _WIN32
+std::string getexepath(){
+  char result[ MAX_PATH ];
+  return std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+}
+#endif
+
+
+#ifdef linux
+std::string getexepath()
+{
+  char result[ PATH_MAX ];
+  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  return std::string( result, (count > 0) ? count : 0 );
+}
+#endif
