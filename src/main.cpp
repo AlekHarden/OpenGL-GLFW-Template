@@ -2,22 +2,26 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-#include <Display.hpp>
-
 int main(){
+
 
     if (!glfwInit()) throw "Error: GLFW could not initialize.";
 
-    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode *vidMode = glfwGetVideoMode(primaryMonitor);
-    GLFWwindow* window = glfwCreateWindow(vidMode->width, vidMode->height, "Window", primaryMonitor, NULL);
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
+
+    GLFWwindow* window = glfwCreateWindow(vidMode->width, vidMode->height,"Window", primaryMonitor, NULL);
+
 
     
     if (!window){
         glfwTerminate();
-        return -1;
     }
 
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+
+    if (glewInit() != GLEW_OK) throw "Error: GLEW could not Initialize";
      
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
