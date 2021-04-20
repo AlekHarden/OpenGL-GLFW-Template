@@ -82,9 +82,14 @@ int main(){
 void readSettings(std::map<std::string,struct setting>,std::string fileName){
 
     std::fstream file;
-    file.open(fileName,std::fstream::out);
 
-    std::cout << getexepath() << std::endl;
+    std::string dir = getexepath().substr(0,getexepath().find_last_of("/\\")) + "/";
+    std::string path = dir + fileName;
+
+
+
+
+    file.open(path,std::fstream::out);
 
     file << "fuckmeeeeeee";
 
