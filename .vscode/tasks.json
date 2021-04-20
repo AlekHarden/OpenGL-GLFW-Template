@@ -29,7 +29,8 @@
 					"${workspaceFolder}\\lib\\*",
 					"-lglew32",
 					"-lglfw3dll",
-					"-lopengl32"
+					"-lopengl32",
+					//"-mwindows" //removes console
 				]
 			},
 			"options": {

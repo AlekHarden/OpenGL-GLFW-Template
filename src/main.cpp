@@ -1,5 +1,5 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GL/glew.h> //include glew.h before glfw3.h
+#include <GLFW/glfw3.h> 
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -19,6 +19,9 @@ void writeSettings(std::map<std::string,struct setting> settings,std::string fil
 std::string getexepath();
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+void listVideoModes(GLFWmonitor* monitor);
+
 
 
 
@@ -53,6 +56,14 @@ int main(){
     const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
     std::string title = "Window";
 
+    listVideoModes(primaryMonitor); //To be implemented as a dropdown menu gui
+
+
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	//glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+
+
     if(settings["fullscreen"].current == "true"){
         fullscreen = true;
         glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
@@ -70,15 +81,25 @@ int main(){
         glfwTerminate();
     }
 
+   
+
+
+
+
 
     glfwSetKeyCallback(window, keyCallback);
 
-    glfwMakeContextCurrent(window);
-    if (glewInit() != GLEW_OK) throw "Error: GLEW could not Initialize";
-     
+    glfwMakeContextCurrent(window); 
+    if (glewInit() != GLEW_OK) throw "Error: GLEW could not Initialize"; //Only call within a valid OpenGL context
+
+	std::cout << std::endl << "OpenGL " << glGetString(GL_VERSION) << std::endl;     // Print OpenGL Version
+
+    glClearColor(0.1,0.1,0.1,1); //Set Background Color
+
     while (!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+
+        glClear(GL_COLOR_BUFFER_BIT); //Clear using Background Color
 
         glfwSwapBuffers(window);
 
@@ -110,9 +131,6 @@ void readSettings(std::map<std::string,struct setting> &settings,std::string fil
         index = line.find('=',0);
         key = line.substr(0,index);
         value = line.substr(index + 1 ,line.length()-(index+1));
-
-        std::cout << key << " : " << value << std::endl;
-
         if(settings.find(key) != settings.end()){
             settings[key].current = value;
         }
@@ -138,6 +156,18 @@ void writeSettings(std::map<std::string,struct setting> settings,std::string fil
     file.close();
 }
 
+void listVideoModes(GLFWmonitor* monitor){
+    int count;
+    const GLFWvidmode* modes = glfwGetVideoModes(monitor, &count);
+
+    std::cout << "List of all Valid Modes" << std::endl << "-----------------------" << std::endl;
+
+
+    for(int i = 0; i < count; i++){
+        std::cout << modes[i].width << "x" << modes[i].height << " @ " << modes[i].refreshRate << "Hz" << std::endl;
+    }
+}
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_F11 && action == GLFW_PRESS){
         //Fullscreen Toggle
@@ -153,6 +183,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         }
         fullscreen = !fullscreen;
     }
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+        glfwDestroyWindow(window);
+    }
+
+    
         
 }
 
