@@ -1,8 +1,14 @@
-#include <GL/glew.h> //include glew.h before glfw3.h
-#include <GLFW/glfw3.h> 
+//Library Includes
+#include <GL/glew.h> //include glew.h before glfw3.h or else
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+//Standard Includes
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <chrono>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -13,14 +19,24 @@
 #include <unistd.h>
 #endif
 
+//Custom Includes
+#include <Shader.hpp>
+#include <Model.hpp>
 
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName);
 void writeSettings(std::map<std::string,struct setting> settings,std::string fileName);
-std::string getexepath();
+std::string getexedir();
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods);
+void windowSizeCallback(GLFWwindow* window, int w, int h);
+
 
 void listVideoModes(GLFWmonitor* monitor);
+
+void Draw(const Shader& shader,const Model& model);
+
+
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
 
 
@@ -32,9 +48,11 @@ struct setting{
 
 
 //Global Variables
-bool fullscreen;
 GLFWwindow* window;
+bool fullscreen;
+int width,height;
 std::map<std::string,struct setting> settings;
+glm::mat4 proj,view,mvp;
 
 
 
@@ -46,6 +64,8 @@ int main(){
     settings.insert( std::pair<std::string,struct setting>("fullscreen",{"false","false"}));
     settings.insert( std::pair<std::string,struct setting>("width",{"854","854"}));
     settings.insert( std::pair<std::string,struct setting>("height",{"480","480"}));
+    settings.insert( std::pair<std::string,struct setting>("debugmode",{"false","false"}));
+
 
     readSettings(settings,"settings.txt");
     writeSettings(settings,"settings.txt");
@@ -71,39 +91,98 @@ int main(){
         glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
         window = glfwCreateWindow(vidMode->width,vidMode->height,title.c_str(),primaryMonitor, NULL);
+        width = vidMode->width;
+        height = vidMode->height;
     }
     else{
         fullscreen = false;
         window = glfwCreateWindow(std::atoi(settings["width"].current.c_str()),std::atoi(settings["height"].current.c_str()),title.c_str(),NULL, NULL);
+        width = std::atoi(settings["width"].current.c_str());
+        height = std::atoi(settings["height"].current.c_str());
     }
 
     if (!window){
         glfwTerminate();
     }
 
-   
 
-
-
-
-
-    glfwSetKeyCallback(window, keyCallback);
+    glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetKeyCallback(window, keyPressed);
 
     glfwMakeContextCurrent(window); 
     if (glewInit() != GLEW_OK) throw "Error: GLEW could not Initialize"; //Only call within a valid OpenGL context
+    std::cout << std::endl << "OpenGL " << glGetString(GL_VERSION) << std::endl; // Print OpenGL Version
+    glDebugMessageCallback(MessageCallback, 0); //Set OpenGL Error Messgage Callback
 
-	std::cout << std::endl << "OpenGL " << glGetString(GL_VERSION) << std::endl;     // Print OpenGL Version
-
+    //Set projection units to pixel space with origin at center
+    proj = glm::ortho(-vidMode->width/2.0f, vidMode->width/2.0f,-vidMode->height/2.0f, vidMode->height/2.0f, -1.0f, 1.0f);
+    //Set default camera view
+	view = glm::scale(glm::mat4(1.0f),glm::vec3(1.0f/*Default ScaleX*/,1.0f/*Default ScaleY*/,1.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(-0/*Default PanX*/,-0/*Default PanY*/,0));
+    
     glClearColor(0.1,0.1,0.1,1); //Set Background Color
+
+
+    Model box(4,6,glm::vec4(0.0f,1.0f,1.0f,1.0f));
+    unsigned int square[6] = {0,1,2,0,2,3};
+    float points[] = {100.0f,100.0f,-100.0f,100.0f,-100.0f,-100.0f,100.0f,-100.0f};
+    box.setIndices(square);
+    box.setPoints(points);
+
+    Shader shader(getexedir()+"../res/shaders/basic/vertex.vsh",getexedir()+"../res/shaders/basic/fragment.fsh");
+
+	                                      
+
+    shader.Bind();
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> duration;
+
+    unsigned int frames = 0;
+
+    glfwSwapInterval(0);	
+
 
     while (!glfwWindowShouldClose(window))
     {
 
         glClear(GL_COLOR_BUFFER_BIT); //Clear using Background Color
 
+        mvp = proj * view;
+        shader.SetUniformMat4f("u_MVP",mvp);
+        Draw(shader,box);
+
+
+
+
+
+
+
+
+
+
+
         glfwSwapBuffers(window);
 
         glfwPollEvents();
+        duration = t2 - t1;
+
+        frames++;
+
+        if(duration.count() >= 1.0){
+            std::cout << "\b\b\b   \b\b\b\rFps: " << frames;
+            //std::cout << "W: " << width << " H: " << height << std::endl;
+
+            frames = 0;
+            t1 = std::chrono::high_resolution_clock::now();
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+
+
+
+
     }
 
     glfwTerminate();
@@ -112,11 +191,17 @@ int main(){
     return 0;
 }
 
+void Draw(const Shader& shader,const Model& model){
+	shader.Bind();
+	(*model.getVertexArray()).Bind();
+	(*model.getIndexBuffer()).Bind();
+	glDrawElements( GL_TRIANGLES,(*model.getIndexBuffer()).GetCount(), GL_UNSIGNED_INT, nullptr);
+}
+
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName){
 
     std::fstream file;
-    std::string dir = getexepath().substr(0,getexepath().find_last_of("/\\")) + "/";
-    std::string path = dir + fileName;
+    std::string path = getexedir() + fileName;
 
     file.open(path,std::fstream::in);
 
@@ -143,8 +228,7 @@ void readSettings(std::map<std::string,struct setting> &settings,std::string fil
 void writeSettings(std::map<std::string,struct setting> settings,std::string fileName){
 
     std::fstream file;
-    std::string dir = getexepath().substr(0,getexepath().find_last_of("/\\")) + "/";
-    std::string path = dir + fileName;
+    std::string path = getexedir() + fileName;
 
     file.open(path,std::fstream::out);
 
@@ -168,7 +252,13 @@ void listVideoModes(GLFWmonitor* monitor){
     }
 }
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
+void windowSizeCallback(GLFWwindow* window, int w, int h)
+{
+    width = w;
+    height = h;
+}
+
+void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_F11 && action == GLFW_PRESS){
         //Fullscreen Toggle
         GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
@@ -177,9 +267,13 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
             int w = std::atoi(settings["width"].current.c_str());
             int h = std::atoi(settings["height"].current.c_str());
             glfwSetWindowMonitor(window, NULL, (vidMode->width/2)-(w/2), (vidMode->height/2)-(h/2),w,h,GLFW_DONT_CARE);
+            width = std::atoi(settings["width"].current.c_str());
+            height = std::atoi(settings["height"].current.c_str());
         }
         else{
             glfwSetWindowMonitor(window, primaryMonitor, 0, 0, vidMode->width,vidMode->height,vidMode->refreshRate);
+            width = vidMode->width;
+            height = vidMode->height;
         }
         fullscreen = !fullscreen;
     }
@@ -194,20 +288,87 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 
 
+#if defined(_WIN32)
+std::string getexedir(){
 
-#ifdef _WIN32
-std::string getexepath(){
-  char result[ MAX_PATH ];
-  return std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+    char result[ MAX_PATH ];
+    std::string exe = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+    std::string dir = exe.substr(0,exe.find_last_of("/\\")) + "/";
+
+    return dir;
 }
-#endif
-
-
-#ifdef linux
-std::string getexepath()
+#elif defined(linux)
+std::string getexedir()
 {
-  char result[ PATH_MAX ];
-  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-  return std::string( result, (count > 0) ? count : 0 );
+    char result[ PATH_MAX ];
+    ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+    std::string exe = std::string( result, (count > 0) ? count : 0 );
+    std::string dir = exe.substr(0,exe.find_last_of("/\\")) + "/";
+
+    return dir;
+}
+#elif
+std::string getexedir(){
+    return "";
 }
 #endif
+
+
+void GLAPIENTRY MessageCallback(
+	GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam ){
+
+	if(settings["debugmode"].current != "true" && type != GL_DEBUG_TYPE_ERROR) {
+		return;
+	}
+
+	std::cout << "---------------------opengl-callback------------" << std::endl;
+	std::cout << "message: "<< message << std::endl;
+	std::cout << "type: ";
+	switch (type) {
+	case GL_DEBUG_TYPE_ERROR:
+		std::cout << "ERROR";
+		break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+		std::cout << "DEPRECATED_BEHAVIOR";
+		break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+		std::cout << "UNDEFINED_BEHAVIOR";
+		break;
+	case GL_DEBUG_TYPE_PORTABILITY:
+		std::cout << "PORTABILITY";
+		break;
+	case GL_DEBUG_TYPE_PERFORMANCE:
+		std::cout << "PERFORMANCE";
+		break;
+	case GL_DEBUG_TYPE_OTHER:
+		std::cout << "OTHER";
+		break;
+	}
+	std::cout << std::endl;
+
+	std::cout << "id: " << id << std::endl;
+	std::cout << "severity: ";
+	switch (severity) {
+	case GL_DEBUG_SEVERITY_LOW:
+		std::cout << "LOW";
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		std::cout << "MEDIUM";
+		break;
+	case GL_DEBUG_SEVERITY_HIGH:
+		std::cout << "HIGH";
+		break;
+	}
+	std::cout << std::endl;
+	//std::cout << "---------------------opengl-callback-end--------------" << std::endl;
+
+	// if (severity != GL_DEBUG_SEVERITY_NOTIFICATION){
+	// 	fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s, \n", ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message );
+	// }
+};
