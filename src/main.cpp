@@ -198,7 +198,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 #ifdef _WIN32
 std::string getexepath(){
   char result[ MAX_PATH ];
-  return std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+  return std::string( result, GetModuleFileNameA( NULL, result, MAX_PATH ) );
 }
 #endif
 
