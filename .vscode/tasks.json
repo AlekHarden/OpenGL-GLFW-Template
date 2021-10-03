@@ -29,8 +29,7 @@
 					"${workspaceFolder}\\lib\\*",
 					"-lglew32",
 					"-lglfw3dll",
-					"-lopengl32",
-					//"-mwindows" //removes console
+					"-lopengl32"
 				]
 			},
 			"options": {
@@ -39,10 +38,7 @@
 			"problemMatcher": [
 				"$gcc"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"group": "build",
 			"detail": "compile project"
 		},
 		{
@@ -55,7 +51,10 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"detail": "run project",
 			"dependsOrder": "sequence",
 			"dependsOn": [

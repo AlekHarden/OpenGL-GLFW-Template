@@ -22,6 +22,7 @@
 //Custom Includes
 #include <Shader.hpp>
 #include <Model.hpp>
+#include <Renderer.hpp>
 
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName);
 void writeSettings(std::map<std::string,struct setting> settings,std::string fileName);
@@ -47,27 +48,34 @@ struct setting{
 };
 
 
+
+
 //Global Variables
 GLFWwindow* window;
 bool fullscreen;
-int width,height;
+int width,height; //current viewport width and height
 std::map<std::string,struct setting> settings;
 glm::mat4 proj,view,mvp;
 
 
-
+float xpos;
+float ypos;
 
 
 
 int main(){
 
+    xpos = 0.0;
+    ypos = 0.0;
+
+    //Default settings
     settings.insert( std::pair<std::string,struct setting>("fullscreen",{"false","false"}));
     settings.insert( std::pair<std::string,struct setting>("width",{"854","854"}));
     settings.insert( std::pair<std::string,struct setting>("height",{"480","480"}));
     settings.insert( std::pair<std::string,struct setting>("debugmode",{"false","false"}));
 
 
-    readSettings(settings,"settings.txt");
+    readSettings(settings,"settings.txt"); 
     writeSettings(settings,"settings.txt");
 
     if (!glfwInit()) throw "Error: GLFW could not initialize.";
@@ -115,24 +123,24 @@ int main(){
     glDebugMessageCallback(MessageCallback, 0); //Set OpenGL Error Messgage Callback
 
     //Set projection units to pixel space with origin at center
-    proj = glm::ortho(-vidMode->width/2.0f, vidMode->width/2.0f,-vidMode->height/2.0f, vidMode->height/2.0f, -1.0f, 1.0f);
+    proj = glm::ortho(-width/2.0f, width/2.0f,-height/2.0f, height/2.0f, -1.0f, 1.0f);
     //Set default camera view
 	view = glm::scale(glm::mat4(1.0f),glm::vec3(1.0f/*Default ScaleX*/,1.0f/*Default ScaleY*/,1.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(-0/*Default PanX*/,-0/*Default PanY*/,0));
     
     glClearColor(0.1,0.1,0.1,1); //Set Background Color
 
 
-    Model box(4,6,glm::vec4(0.0f,1.0f,1.0f,1.0f));
+    Model box(4,6,glm::vec4(1.0f,1.0f,1.0f,1.0f));
     unsigned int square[6] = {0,1,2,0,2,3};
-    float points[] = {100.0f,100.0f,-100.0f,100.0f,-100.0f,-100.0f,100.0f,-100.0f};
     box.setIndices(square);
-    box.setPoints(points);
 
     Shader shader(getexedir()+"../res/shaders/basic/vertex.vsh",getexedir()+"../res/shaders/basic/fragment.fsh");
 
 	                                      
 
     shader.Bind();
+
+    Renderer renderer;
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -144,6 +152,11 @@ int main(){
     glfwSwapInterval(0);	
 
 
+
+
+    
+
+
     while (!glfwWindowShouldClose(window))
     {
 
@@ -151,10 +164,11 @@ int main(){
 
         mvp = proj * view;
         shader.SetUniformMat4f("u_MVP",mvp);
-        Draw(shader,box);
+        renderer.Draw(box,shader);
 
 
-
+        float points[] = {10.0f+xpos,10.0f+ypos,-10.0f+xpos,10.0f+ypos,-10.0f+xpos,-10.0f+ypos,10.0f+xpos,-10.0f+ypos};
+        box.setPoints(points);
 
 
 
@@ -189,13 +203,6 @@ int main(){
 
 
     return 0;
-}
-
-void Draw(const Shader& shader,const Model& model){
-	shader.Bind();
-	(*model.getVertexArray()).Bind();
-	(*model.getIndexBuffer()).Bind();
-	glDrawElements( GL_TRIANGLES,(*model.getIndexBuffer()).GetCount(), GL_UNSIGNED_INT, nullptr);
 }
 
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName){
@@ -256,6 +263,11 @@ void windowSizeCallback(GLFWwindow* window, int w, int h)
 {
     width = w;
     height = h;
+
+    glViewport(0,0,width,height);
+    proj = glm::ortho(-width/2.0f, width/2.0f,-height/2.0f, height/2.0f, -1.0f, 1.0f);
+
+
 }
 
 void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods){
@@ -281,7 +293,30 @@ void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods)
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwDestroyWindow(window);
     }
+    
 
+
+    if (key == GLFW_KEY_UP) {
+        ypos += 5.0;
+
+    }
+
+    if (key == GLFW_KEY_DOWN) {
+        ypos -= 5.0;
+
+    }
+
+    if (key == GLFW_KEY_LEFT) {
+        xpos -= 5.0;
+
+    }
+
+    if (key == GLFW_KEY_RIGHT) {
+        xpos += 5.0;
+
+    }
+    
+    
     
         
 }
@@ -292,7 +327,7 @@ void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods)
 std::string getexedir(){
 
     char result[ MAX_PATH ];
-    std::string exe = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+    std::string exe = std::string( result, GetModuleFileNameA( NULL, result, MAX_PATH ) );
     std::string dir = exe.substr(0,exe.find_last_of("/\\")) + "/";
 
     return dir;
