@@ -17,7 +17,7 @@
 				"-lGLEW"
 			],
 			"windows": {
-				"command": "C:\\MinGW\\bin\\g++.exe",
+				"command": "g++.exe",
 				"args": [
 					"-g",
 					"-o",
