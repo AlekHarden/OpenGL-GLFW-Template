@@ -249,18 +249,11 @@ void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods)
 #if defined(_WIN32)
 std::string getexedir(){
 
-<<<<<<< HEAD
-#ifdef _WIN32
-std::string getexepath(){
-  char result[ MAX_PATH ];
-  return std::string( result, GetModuleFileNameA( NULL, result, MAX_PATH ) );
-=======
     char result[ MAX_PATH ];
     std::string exe = std::string( result, GetModuleFileNameA( NULL, result, MAX_PATH ) );
     std::string dir = exe.substr(0,exe.find_last_of("/\\")) + "/";
 
     return dir;
->>>>>>> openglclasses
 }
 #elif defined(linux)
 std::string getexedir()
