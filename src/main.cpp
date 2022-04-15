@@ -52,15 +52,10 @@ std::map<std::string,struct setting> settings;
 glm::mat4 proj,view,mvp;
 
 
-float xpos;
-float ypos;
-
-
 
 int main(){
 
-    xpos = 0.0;
-    ypos = 0.0;
+   
 
     //Default settings
     settings.insert( std::pair<std::string,struct setting>("fullscreen",{"false","false"}));
@@ -76,7 +71,7 @@ int main(){
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
-    std::string title = "Window";
+    std::string title = "OpenGl-GLFW-Template";
 
 
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -122,17 +117,11 @@ int main(){
     glClearColor(0.1,0.1,0.1,1); //Set Background Color
 
 
-    Model box(4,6,glm::vec4(1.0f,1.0f,1.0f,1.0f));
-    unsigned int square[6] = {0,1,2,0,2,3};
-    box.setIndices(square);
+    Renderer renderer;
 
     Shader shader(getexedir()+"../res/shaders/basic/vertex.vsh",getexedir()+"../res/shaders/basic/fragment.fsh");
-
-	                                      
-
     shader.Bind();
 
-    Renderer renderer;
 
     glfwSwapInterval(0);	
 
@@ -149,11 +138,9 @@ int main(){
 
         mvp = proj * view;
         shader.SetUniformMat4f("u_MVP",mvp);
-        renderer.Draw(box,shader);
+    
 
 
-        float points[] = {10.0f+xpos,10.0f+ypos,-10.0f+xpos,10.0f+ypos,-10.0f+xpos,-10.0f+ypos,10.0f+xpos,-10.0f+ypos};
-        box.setPoints(points);
 
 
 
@@ -254,28 +241,6 @@ void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods)
     
 
 
-    if (key == GLFW_KEY_UP) {
-        ypos += 5.0;
-
-    }
-
-    if (key == GLFW_KEY_DOWN) {
-        ypos -= 5.0;
-
-    }
-
-    if (key == GLFW_KEY_LEFT) {
-        xpos -= 5.0;
-
-    }
-
-    if (key == GLFW_KEY_RIGHT) {
-        xpos += 5.0;
-
-    }
-    
-    
-    
         
 }
 
