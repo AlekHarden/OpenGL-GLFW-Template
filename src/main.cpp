@@ -8,7 +8,6 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <chrono>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -23,6 +22,7 @@
 #include <Shader.hpp>
 #include <Model.hpp>
 #include <Renderer.hpp>
+#include <OpenGLError.hpp>
 
 void readSettings(std::map<std::string,struct setting> &settings,std::string fileName);
 void writeSettings(std::map<std::string,struct setting> settings,std::string fileName);
@@ -32,12 +32,6 @@ void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mods)
 void windowSizeCallback(GLFWwindow* window, int w, int h);
 
 
-void listVideoModes(GLFWmonitor* monitor);
-
-void Draw(const Shader& shader,const Model& model);
-
-
-void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
 
 
@@ -83,8 +77,6 @@ int main(){
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* vidMode = glfwGetVideoMode(primaryMonitor);
     std::string title = "Window";
-
-    listVideoModes(primaryMonitor); //To be implemented as a dropdown menu gui
 
 
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -142,13 +134,6 @@ int main(){
 
     Renderer renderer;
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> duration;
-
-    unsigned int frames = 0;
-
     glfwSwapInterval(0);	
 
 
@@ -180,22 +165,6 @@ int main(){
         glfwSwapBuffers(window);
 
         glfwPollEvents();
-        duration = t2 - t1;
-
-        frames++;
-
-        if(duration.count() >= 1.0){
-            std::cout << "\b\b\b   \b\b\b\rFps: " << frames;
-            //std::cout << "W: " << width << " H: " << height << std::endl;
-
-            frames = 0;
-            t1 = std::chrono::high_resolution_clock::now();
-        }
-
-        t2 = std::chrono::high_resolution_clock::now();
-
-
-
 
     }
 
@@ -247,17 +216,6 @@ void writeSettings(std::map<std::string,struct setting> settings,std::string fil
     file.close();
 }
 
-void listVideoModes(GLFWmonitor* monitor){
-    int count;
-    const GLFWvidmode* modes = glfwGetVideoModes(monitor, &count);
-
-    std::cout << "List of all Valid Modes" << std::endl << "-----------------------" << std::endl;
-
-
-    for(int i = 0; i < count; i++){
-        std::cout << modes[i].width << "x" << modes[i].height << " @ " << modes[i].refreshRate << "Hz" << std::endl;
-    }
-}
 
 void windowSizeCallback(GLFWwindow* window, int w, int h)
 {
@@ -348,62 +306,3 @@ std::string getexedir(){
 }
 #endif
 
-
-void GLAPIENTRY MessageCallback(
-	GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar* message,
-	const void* userParam ){
-
-	if(settings["debugmode"].current != "true" && type != GL_DEBUG_TYPE_ERROR) {
-		return;
-	}
-
-	std::cout << "---------------------opengl-callback------------" << std::endl;
-	std::cout << "message: "<< message << std::endl;
-	std::cout << "type: ";
-	switch (type) {
-	case GL_DEBUG_TYPE_ERROR:
-		std::cout << "ERROR";
-		break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-		std::cout << "DEPRECATED_BEHAVIOR";
-		break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-		std::cout << "UNDEFINED_BEHAVIOR";
-		break;
-	case GL_DEBUG_TYPE_PORTABILITY:
-		std::cout << "PORTABILITY";
-		break;
-	case GL_DEBUG_TYPE_PERFORMANCE:
-		std::cout << "PERFORMANCE";
-		break;
-	case GL_DEBUG_TYPE_OTHER:
-		std::cout << "OTHER";
-		break;
-	}
-	std::cout << std::endl;
-
-	std::cout << "id: " << id << std::endl;
-	std::cout << "severity: ";
-	switch (severity) {
-	case GL_DEBUG_SEVERITY_LOW:
-		std::cout << "LOW";
-		break;
-	case GL_DEBUG_SEVERITY_MEDIUM:
-		std::cout << "MEDIUM";
-		break;
-	case GL_DEBUG_SEVERITY_HIGH:
-		std::cout << "HIGH";
-		break;
-	}
-	std::cout << std::endl;
-	//std::cout << "---------------------opengl-callback-end--------------" << std::endl;
-
-	// if (severity != GL_DEBUG_SEVERITY_NOTIFICATION){
-	// 	fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s, \n", ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message );
-	// }
-};
